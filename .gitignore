@@ -1,3 +1,4 @@
 apps/videos/media\
 apps
 .vscode
+__pycache__

@@ -68,16 +68,22 @@ async def start_app(app_id: str):
     if app_data.get("type") == "url":
         return {"status": "success", "app_info": app_data}
 
-    cmd = [
-        "pm2", "start", app_data["script"],
-        "--name", app_data["pm2_name"],
-        "--cwd", app_data["cwd"]
-    ]
-    if app_data["script"].endswith(".sh"):
-        cmd += ["--interpreter", "bash"]
-    if app_data.get("args"):
-        cmd.extend(app_data["args"])
-        
+    check_cmd = ["pm2", "describe", app_data["pm2_name"]]
+    check_result = subprocess.run(check_cmd, capture_output=True)
+
+    if check_result.returncode == 0:
+        cmd = ["pm2", "restart", app_data["pm2_name"]]
+    else:
+        cmd = [
+            "pm2", "start", app_data["script"],
+            "--name", app_data["pm2_name"],
+            "--cwd", app_data["cwd"]
+        ]
+        if app_data["script"].endswith(".sh"):
+            cmd += ["--interpreter", "bash"]
+        if app_data.get("args"):
+            cmd.extend(app_data["args"])
+            
     subprocess.run(cmd, capture_output=True)
     return {"status": "success", "app_info": app_data}
 
