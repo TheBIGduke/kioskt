@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>System Hub</title>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --blue-1: #00d4ff;
+            --blue-2: #0080ff;
+            --blue-3: #003aff;
+            --glow: 0 0 20px #00d4ff88, 0 0 60px #0080ff44;
+            --glow-strong: 0 0 30px #00d4ffbb, 0 0 80px #0080ff66, 0 0 120px #003aff33;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #020818;
+            color: white;
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* ── Canvas background ── */
+        #bg-canvas {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* ── Scanlines overlay ── */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: 1;
+            background: repeating-linear-gradient(to bottom,
+                    transparent 0px,
+                    transparent 3px,
+                    rgba(0, 0, 0, 0.08) 3px,
+                    rgba(0, 0, 0, 0.08) 4px);
+            pointer-events: none;
+        }
+
+        /* ── HUB MENU ── */
+        #hub-menu {
+            position: relative;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            gap: 0;
+        }
+
+        .hub-header {
+            text-align: center;
+            margin-bottom: 60px;
+            animation: fadeDown 0.8s ease both;
+        }
+
+        .hub-title {
+            font-family: 'Orbitron', monospace;
+            font-weight: 900;
+            font-size: clamp(4rem, 8vw, 7rem);
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #fff 0%, var(--blue-1) 50%, var(--blue-2) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 30px #00d4ff88);
+            line-height: 1.1;
+        }
+
+        .hub-subtitle {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.2rem;
+            letter-spacing: 0.6em;
+            color: var(--blue-1);
+            opacity: 0.6;
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+
+        .title-bar {
+            width: 300px;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, var(--blue-1), transparent);
+            margin: 24px auto 0;
+            animation: pulse-bar 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-bar {
+
+            0%,
+            100% {
+                opacity: 0.5;
+                transform: scaleX(0.8);
+            }
+
+            50% {
+                opacity: 1;
+                transform: scaleX(1.2);
+            }
+        }
+
+        /* ── APP GRID ── */
+        #app-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 32px;
+            justify-content: center;
+            max-width: 1200px;
+            padding: 0 40px;
+        }
+
+        .app-btn {
+            position: relative;
+            padding: 0;
+            width: 320px;
+            height: 160px;
+            cursor: pointer;
+            border: none;
+            background: none;
+            outline: none;
+            animation: fadeUp 0.6s ease both;
+        }
+
+        .app-btn:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .app-btn:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .app-btn:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        .app-btn:nth-child(4) {
+            animation-delay: 0.4s;
+        }
+
+        .app-btn:nth-child(5) {
+            animation-delay: 0.5s;
+        }
+
+        .app-btn:nth-child(6) {
+            animation-delay: 0.6s;
+        }
+
+        .app-card {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 16px;
+            background: linear-gradient(135deg, rgba(0, 80, 160, 0.18), rgba(0, 30, 80, 0.28));
+            border: 1px solid rgba(0, 212, 255, 0.25);
+            backdrop-filter: blur(12px);
+            overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        /* corner accents */
+        .app-card::before,
+        .app-card::after {
+            content: '';
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            border-color: var(--blue-1);
+            border-style: solid;
+            opacity: 0.6;
+            transition: opacity 0.25s;
+        }
+
+        .app-card::before {
+            top: 8px;
+            left: 8px;
+            border-width: 2px 0 0 2px;
+            border-radius: 3px 0 0 0;
+        }
+
+        .app-card::after {
+            bottom: 8px;
+            right: 8px;
+            border-width: 0 2px 2px 0;
+            border-radius: 0 0 3px 0;
+        }
+
+        /* sweep shine on hover */
+        .app-card .shine {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(105deg, transparent 40%, rgba(0, 212, 255, 0.08) 50%, transparent 60%);
+            transform: translateX(-100%);
+            transition: transform 0s;
+        }
+
+        .app-btn:hover .app-card {
+            transform: translateY(-6px) scale(1.02);
+            border-color: rgba(0, 212, 255, 0.7);
+            box-shadow: var(--glow-strong);
+        }
+
+        .app-btn:hover .app-card::before,
+        .app-btn:hover .app-card::after {
+            opacity: 1;
+        }
+
+        .app-btn:hover .shine {
+            transform: translateX(200%);
+            transition: transform 0.5s ease;
+        }
+
+        .app-btn:active .app-card {
+            transform: scale(0.97);
+        }
+
+        .app-icon {
+            font-size: 3.5rem;
+            line-height: 1;
+            filter: drop-shadow(0 0 10px var(--blue-1));
+        }
+
+        .app-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: #fff;
+            text-shadow: 0 0 15px var(--blue-1);
+        }
+
+        /* ── IFRAME / HEADLESS ── */
+        #app-frame {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            width: 100%;
+            height: 100%;
+            border: none;
+            background: #000;
+        }
+
+        #headless-screen {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 20;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: #020818;
+            color: var(--blue-1);
+            font-family: 'Orbitron', monospace;
+            text-align: center;
+            gap: 16px;
+        }
+
+        #headless-screen h2 {
+            font-size: 3rem;
+            text-shadow: var(--glow);
+        }
+
+        #headless-screen p {
+            font-size: 1.4rem;
+            opacity: 0.6;
+            letter-spacing: 0.2em;
+        }
+
+        /* ── RETURN BUTTON ── */
+        #return-btn {
+            display: none;
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 9999;
+            width: 250px;
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            background: none;
+            border: none;
+            padding: 0;
+            transition: transform 0.15s ease, opacity 0.15s ease, filter 0.15s ease;
+            opacity: 0.85;
+            filter: drop-shadow(0 0 8px #00d4ff66);
+        }
+
+        #return-btn:hover {
+            transform: scale(1.08);
+            opacity: 1;
+            filter: drop-shadow(0 0 18px #00d4ffaa);
+        }
+
+        #return-btn img {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        /* ── ANIMATIONS ── */
+        @keyframes fadeDown {
+            from {
+                opacity: 0;
+                transform: translateY(-30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* ── LOADING PULSE ── */
+        .loading-dots::after {
+            content: '...';
+            animation: dots 1.2s steps(4, end) infinite;
+        }
+
+        @keyframes dots {
+            0% {
+                content: '';
+            }
+
+            25% {
+                content: '.';
+            }
+
+            50% {
+                content: '..';
+            }
+
+            75%,
+            100% {
+                content: '...';
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+
+    <div id="hub-menu">
+        <div class="hub-header">
+            <div class="hub-title">KIOSKT</div>
+            <div class="hub-subtitle">Selecciona un Holocrón</div>
+            <div class="title-bar"></div>
+        </div>
+        <div id="app-grid" aria-label="Holocrons"></div>
+    </div>
+
+    <iframe id="app-frame" allow="camera; microphone; display-capture; autoplay; fullscreen; geolocation"></iframe>
+
+    <div id="headless-screen">
+        <h2>⬡ EN EJECUCIÓN</h2>
+        <p class="loading-dots">Proceso activo</p>
+    </div>
+
+    <button id="return-btn" onclick="requestReturn()" title="Volver al Hub">
+        <img src="/static/return.png" alt="Volver al Hub">
+    </button>
+
+    <script>
+        /* ── Particle / grid background ── */
+        (function () {
+            const canvas = document.getElementById('bg-canvas');
+            const ctx = canvas.getContext('2d');
+            let W, H, particles, grid;
+
+            const ICONS = ['⬡', '⬢', '◈', '◇', '⬟'];
+
+            function resize() {
+                W = canvas.width = window.innerWidth;
+                H = canvas.height = window.innerHeight;
+            }
+
+            function initParticles() {
+                particles = Array.from({ length: 60 }, () => ({
+                    x: Math.random() * W,
+                    y: Math.random() * H,
+                    r: Math.random() * 1.5 + 0.5,
+                    vx: (Math.random() - 0.5) * 0.35,
+                    vy: (Math.random() - 0.5) * 0.35,
+                    a: Math.random(),
+                }));
+            }
+
+            function drawGrid() {
+                const size = 80;
+                ctx.beginPath();
+                ctx.strokeStyle = 'rgba(0,100,255,0.06)';
+                ctx.lineWidth = 1;
+                for (let x = 0; x < W; x += size) {
+                    ctx.moveTo(x, 0); ctx.lineTo(x, H);
+                }
+                for (let y = 0; y < H; y += size) {
+                    ctx.moveTo(0, y); ctx.lineTo(W, y);
+                }
+                ctx.stroke();
+            }
+
+            function drawGlow() {
+                // central glow
+                const grd = ctx.createRadialGradient(W / 2, H / 2, 0, W / 2, H / 2, W * 0.55);
+                grd.addColorStop(0, 'rgba(0,100,255,0.07)');
+                grd.addColorStop(1, 'transparent');
+                ctx.fillStyle = grd;
+                ctx.fillRect(0, 0, W, H);
+
+                // bottom glow
+                const bot = ctx.createRadialGradient(W / 2, H, 0, W / 2, H, W * 0.5);
+                bot.addColorStop(0, 'rgba(0,60,200,0.1)');
+                bot.addColorStop(1, 'transparent');
+                ctx.fillStyle = bot;
+                ctx.fillRect(0, 0, W, H);
+            }
+
+            function frame() {
+                ctx.clearRect(0, 0, W, H);
+                drawGrid();
+                drawGlow();
+
+                // update & draw particles
+                particles.forEach(p => {
+                    p.x += p.vx; p.y += p.vy;
+                    if (p.x < 0) p.x = W;
+                    if (p.x > W) p.x = 0;
+                    if (p.y < 0) p.y = H;
+                    if (p.y > H) p.y = 0;
+
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(0,200,255,${p.a * 0.7})`;
+                    ctx.shadowBlur = 8;
+                    ctx.shadowColor = '#00d4ff';
+                    ctx.fill();
+                    ctx.shadowBlur = 0;
+                });
+
+                // draw connections
+                for (let i = 0; i < particles.length; i++) {
+                    for (let j = i + 1; j < particles.length; j++) {
+                        const dx = particles[i].x - particles[j].x;
+                        const dy = particles[i].y - particles[j].y;
+                        const d = Math.sqrt(dx * dx + dy * dy);
+                        if (d < 120) {
+                            ctx.beginPath();
+                            ctx.moveTo(particles[i].x, particles[i].y);
+                            ctx.lineTo(particles[j].x, particles[j].y);
+                            ctx.strokeStyle = `rgba(0,160,255,${(1 - d / 120) * 0.25})`;
+                            ctx.lineWidth = 1;
+                            ctx.stroke();
+                        }
+                    }
+                }
+
+                requestAnimationFrame(frame);
+            }
+
+            window.addEventListener('resize', () => { resize(); initParticles(); });
+            resize();
+            initParticles();
+            frame();
+        })();
+
+        /* ── App icons map ── */
+        const APP_ICONS = {
+            roulette: '🎡',
+            'slot machine': '🎰',
+            videos: '🎬',
+        };
+
+        function getIcon(name) {
+            return APP_ICONS[name.toLowerCase()] || '⬡';
+        }
+
+        /* ── Hub logic ── */
+        let currentAppId = null;
+
+        window.onload = async () => {
+            try {
+                const response = await fetch('/api/apps');
+                const apps = await response.json();
+                const grid = document.getElementById('app-grid');
+
+                for (const appId in apps) {
+                    const name = apps[appId].name;
+                    const btn = document.createElement('button');
+                    btn.className = 'app-btn';
+                    btn.onclick = () => launchApp(appId);
+                    btn.innerHTML = `
+                        <div class="app-card">
+                            <div class="shine"></div>
+                            <div class="app-icon">${getIcon(name)}</div>
+                            <div class="app-label">${name}</div>
+                        </div>`;
+                    grid.appendChild(btn);
+                }
+            } catch (err) {
+                console.error('Failed to load apps:', err);
+            }
+        };
+
+        async function launchApp(appId) {
+            const response = await fetch(`/api/start/${appId}`, { method: 'POST' });
+            const data = await response.json();
+            currentAppId = appId;
+
+            document.getElementById('hub-menu').style.display = 'none';
+            document.getElementById('return-btn').style.display = 'block';
+
+            if (data.app_info.type === 'web') {
+                setTimeout(() => {
+                    const frame = document.getElementById('app-frame');
+                    frame.src = `http://localhost:${data.app_info.port}`;
+                    frame.style.display = 'block';
+                }, 1200);
+            } else if (data.app_info.type === 'url') {
+                setTimeout(() => {
+                    const frame = document.getElementById('app-frame');
+                    frame.src = data.app_info.url;
+                    frame.style.display = 'block';
+                }, 1200);
+            } else {
+                document.getElementById('headless-screen').style.display = 'flex';
+            }
+        }
+
+        async function requestReturn() {
+            await fetch(`/api/stop/${currentAppId}`, { method: 'POST' });
+
+            document.getElementById('app-frame').src = '';
+            document.getElementById('app-frame').style.display = 'none';
+            document.getElementById('headless-screen').style.display = 'none';
+            document.getElementById('return-btn').style.display = 'none';
+            document.getElementById('hub-menu').style.display = 'flex';
+
+            currentAppId = null;
+        }
+
+        /* Password functions (disabled)
+        function cancelReturn() { document.getElementById('password-overlay').style.display = 'none'; }
+        async function confirmReturn() {
+            const pw = document.getElementById('kiosk-password').value;
+            if (pw === "1234") {
+                await fetch(`/api/stop/${currentAppId}`, { method: 'POST' });
+                document.getElementById('password-overlay').style.display = 'none';
+                document.getElementById('app-frame').src = '';
+                document.getElementById('app-frame').style.display = 'none';
+                document.getElementById('headless-screen').style.display = 'none';
+                document.getElementById('return-btn').style.display = 'none';
+                document.getElementById('hub-menu').style.display = 'flex';
+                currentAppId = null;
+            } else {
+                alert("Access Denied: Incorrect password.");
+                document.getElementById('kiosk-password').value = '';
+            }
+        }
+        */
+    </script>
+</body>
+
+</html>

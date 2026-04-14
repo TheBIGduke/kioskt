@@ -1,92 +1,165 @@
 # Kioskt
 
-General-purpose kiosk management system designed to provide a centralized Hub for launching and managing multiple web applications 
+[![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg?style=plastic&logo=fastapi)](https://fastapi.tiangolo.com/)
+[![Python](https://img.shields.io/badge/Python-v3.10+-3776AB.svg?style=plastic&logo=python)](https://www.python.org/)
+[![PM2](https://img.shields.io/badge/Process_Manager-PM2-2B037A.svg?style=plastic&logo=pm2)](https://pm2.keymetrics.io/)
+[![Chromium](https://img.shields.io/badge/Browser-Chromium-4285F4.svg?style=plastic&logo=googlechrome)](https://www.chromium.org/)
+[![UBUNTU](https://img.shields.io/badge/Ubuntu-v22.04-E95420.svg?style=plastic&logo=ubuntu)](https://releases.ubuntu.com/jammy/)
 
-## Getting started
 
-To make it easy for you to get started with GitLab, here's a list of recommended next steps.
+## Abstract
 
-Already a pro? Just edit this README.md and make it your own. Want to make it easy? [Use the template at the bottom](#editing-this-readme)!
+**Kioskt** is a sleek, general-purpose kiosk management system designed to provide a centralized Hub for launching and managing multiple web applications. The system automatically discovers sub-applications in a dedicated directory, manages their lifecycle using PM2, and serves them within a secure iframe-based kiosk environment.
 
-## Add your files
+**_This repo was tested on Ubuntu 22.04 LTS._**
 
-- [ ] [Create](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#create-a-file) or [upload](https://docs.gitlab.com/ee/user/project/repository/web_editor.html#upload-a-file) files
-- [ ] [Add files using the command line](https://docs.gitlab.com/ee/gitlab-basics/add-file.html#add-a-file-using-the-command-line) or push an existing Git repository with the following command:
+----
 
+## Features
+
+- **Dynamic App Discovery:** Automatically scans the `apps/` directory for new web applications or external URLs.
+- **Unified Hub Interface:** A high-performance, animated dashboard for easy application selection.
+- **Process Management:** Leverages **PM2** to reliably start, stop, and restart sub-applications.
+- **Automatic Port Assignment:** Dynamically assigns unique ports to discovered apps using MD5 hashing to avoid collisions.
+- **Kiosk Mode Deployment:** Includes scripts to launch Chromium in a locked-down kiosk mode with custom screen positioning.
+- **Integrated Return System:** Allows users to easily switch back to the main Hub from any running application.
+
+----
+## Flowchart
+
+```mermaid
+graph TD
+   subgraph Backend [FastAPI Server]
+      D(Discovery) --> |Scan apps/| C(Config Generation)
+      C --> |API /api/apps| H(Hub Request)
+      H --> |Start /api/start| PM2(PM2 Process Manager)
+   end
+
+   subgraph Frontend [Kioskt Hub]
+      UI(Web Dashboard) --> |User Selection| H
+      Iframe(Iframe Container) --> |Load App Port| WebApp(Running Sub-App)
+   end
+
+   subgraph Deployment
+      Kiosk(Chromium Kiosk) --> |Load| UI
+      WebApp --> |Return Click| Stop(API /api/stop)
+      Stop --> |Kill Process| PM2
+   end
 ```
-cd existing_repo
-git remote add origin https://springlabsdevs.net/mecatronica/robotica/kioskt.git
-git branch -M main
-git push -uf origin main
+
+---
+## Table of Contents
+
+- [Information sources](#information-sources)
+- [Requirements](#requirements)
+   - [Hardware](#hardware)
+   - [Software](#software)
+- [Installation](#installation)
+- [Project Structure](#project-structure)
+- [Usage or Quick start](#usage-or-quick-start)
+- [Troubleshooting](#troubleshooting)
+- [Contributing](#contributing)
+- [License](#license)
+- [Credits](#credits)
+
+----
+## Information sources
+
+- **FastAPI Documentation:** [https://fastapi.tiangolo.com/](https://fastapi.tiangolo.com/)
+- **PM2 Documentation:** [https://pm2.keymetrics.io/docs/usage/quick-start/](https://pm2.keymetrics.io/docs/usage/quick-start/)
+- **Chromium Kiosk Flags:** [https://peter.sh/experiments/chromium-command-line-switches/](https://peter.sh/experiments/chromium-command-line-switches/)
+
+---
+## Requirements
+
+### Hardware
+- Display (optimized for 1080p or specific kiosk monitors).
+- Internet connection (if launching external URL apps).
+
+
+### Software
+- **OS:** Ubuntu 22.04 LTS
+- **Python:** 3.10+
+- **Browser:** Chromium Browser
+- **Process Manager:** PM2 (Node.js/NPM required)
+
+
+---
+## Installation (If needed)
+
+**Clone the repository**
+
+```bash
+git clone <repository-url>
+cd kioskt
 ```
 
-## Integrate with your tools
+**Install dependencies**
 
-- [ ] [Set up project integrations](https://springlabsdevs.net/mecatronica/robotica/kioskt/-/settings/integrations)
+```bash
+# Install Python dependencies
+pip install fastapi uvicorn
 
-## Collaborate with your team
+# Install PM2 (requires Node.js)
+sudo apt install nodejs npm
+sudo npm install -g pm2
 
-- [ ] [Invite team members and collaborators](https://docs.gitlab.com/ee/user/project/members/)
-- [ ] [Create a new merge request](https://docs.gitlab.com/ee/user/project/merge_requests/creating_merge_requests.html)
-- [ ] [Automatically close issues from merge requests](https://docs.gitlab.com/ee/user/project/issues/managing_issues.html#closing-issues-automatically)
-- [ ] [Enable merge request approvals](https://docs.gitlab.com/ee/user/project/merge_requests/approvals/)
-- [ ] [Automatically merge when pipeline succeeds](https://docs.gitlab.com/ee/user/project/merge_requests/merge_when_pipeline_succeeds.html)
+# Install Chromium
+sudo apt install chromium-browser
+```
 
-## Test and Deploy
+---
+## Project Structure
 
-Use the built-in continuous integration in GitLab.
+```bash
+kioskt
+├── apps/                # Directory for sub-applications
+│   ├── Roulette/        # Sample app
+│   ├── Slot Machine/    # Sample app
+│   └── videos/          # Video player app
+├── deploy/
+│   └── kioskt.sh        # Main deployment script
+├── static/
+│   ├── index.html       # Hub frontend
+│   └── return.png       # Navigation icon
+├── hub_backend.py       # FastAPI application manager
+└── README.md            # Project documentation
+```
 
-- [ ] [Get started with GitLab CI/CD](https://docs.gitlab.com/ee/ci/quick_start/index.html)
-- [ ] [Analyze your code for known vulnerabilities with Static Application Security Testing(SAST)](https://docs.gitlab.com/ee/user/application_security/sast/)
-- [ ] [Deploy to Kubernetes, Amazon EC2, or Amazon ECS using Auto Deploy](https://docs.gitlab.com/ee/topics/autodevops/requirements.html)
-- [ ] [Use pull-based deployments for improved Kubernetes management](https://docs.gitlab.com/ee/user/clusters/agent/)
-- [ ] [Set up protected environments](https://docs.gitlab.com/ee/ci/environments/protected_environments.html)
+---
+## Usage or Quick start
 
-***
+**Starting the Hub**
 
-# Editing this README
+The easiest way to start the system is using the provided deployment script:
 
-When you're ready to make this README your own, just edit this file and use the handy template below (or feel free to structure it however you want - this is just a starting point!).  Thank you to [makeareadme.com](https://www.makeareadme.com/) for this template.
+```bash
+bash deploy/kioskt.sh
+```
 
-## Suggestions for a good README
-Every project is different, so consider which of these sections apply to yours. The sections used in the template are suggestions for most open source projects. Also keep in mind that while a README can be too long and detailed, too long is better than too short. If you think your README is too long, consider utilizing another form of documentation rather than cutting out information.
+This will:
+1. Start the `hub_backend.py` on port 8000.
+2. Launch Chromium in Kiosk mode.
+3. Automatically load the Kioskt Hub.
 
-## Name
-Choose a self-explaining name for your project.
+**Adding a New App**
+To add a new application, simply create a folder in `apps/`.
+- If it contains a `deploy/*.sh` file, it will be executed via PM2.
+- If it's a simple directory, it will be served as a static site.
+- You can also add a `url.txt` file to launch an external website in the iframe.
 
-## Description
-Let people know what your project can do specifically. Provide context and add a link to any reference visitors might be unfamiliar with. A list of Features or a Background subsection can also be added here. If there are alternatives to your project, this is a good place to list differentiating factors.
+---
+## Troubleshooting
 
-## Badges
-On some READMEs, you may see small images that convey metadata, such as whether or not all the tests are passing for the project. You can use Shields to add some to your README. Many services also have instructions for adding a badge.
+**Problem:** Sub-app doesn't load in the iframe.
+**Solution:** Check if the app port is blocked or if there is a "Refused to display in a frame" X-Frame-Options error on the target app.
 
-## Visuals
-Depending on what you are making, it can be a good idea to include screenshots or even a video (you'll frequently see GIFs rather than actual videos). Tools like ttygif can help, but check out Asciinema for a more sophisticated method.
+**Problem:** PM2 command not found.
+**Solution:** Ensure `npm install -g pm2` was successful and the path is in your environment variables.
 
-## Installation
-Within a particular ecosystem, there may be a common way of installing things, such as using Yarn, NuGet, or Homebrew. However, consider the possibility that whoever is reading your README is a novice and would like more guidance. Listing specific steps helps remove ambiguity and gets people to using your project as quickly as possible. If it only runs in a specific context like a particular programming language version or operating system or has dependencies that have to be installed manually, also add a Requirements subsection.
+---
+## Credits
 
-## Usage
-Use examples liberally, and show the expected output if you can. It's helpful to have inline the smallest example of usage that you can demonstrate, while providing links to more sophisticated examples if they are too long to reasonably include in the README.
++ **Author:** <span style="color:green">Kaléin Tamaríz</span>
 
-## Support
-Tell people where they can go to for help. It can be any combination of an issue tracker, a chat room, an email address, etc.
-
-## Roadmap
-If you have ideas for releases in the future, it is a good idea to list them in the README.
-
-## Contributing
-State if you are open to contributions and what your requirements are for accepting them.
-
-For people who want to make changes to your project, it's helpful to have some documentation on how to get started. Perhaps there is a script that they should run or some environment variables that they need to set. Make these steps explicit. These instructions could also be useful to your future self.
-
-You can also document commands to lint the code or run tests. These steps help to ensure high code quality and reduce the likelihood that the changes inadvertently break something. Having instructions for running tests is especially helpful if it requires external setup, such as starting a Selenium server for testing in a browser.
-
-## Authors and acknowledgment
-Show your appreciation to those who have contributed to the project.
-
-## License
-For open source projects, say how it is licensed.
-
-## Project status
-If you have run out of energy or time for your project, put a note at the top of the README saying that development has slowed down or stopped completely. Someone may choose to fork your project or volunteer to step in as a maintainer or owner, allowing your project to keep going. You can also make an explicit request for maintainers.
++ **Maintainer:** Dr. Miguel Rangel
