@@ -1,4 +1,5 @@
 #!/bin/bash
+# Created by Kaléin Tamaríz
 # Serve the Videos app via server.py (provides /api/media endpoint + static file serving).
 # Port is derived from the app folder name to match hub_backend.py logic.
 APP_NAME="videos"

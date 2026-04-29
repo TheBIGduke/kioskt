@@ -1,4 +1,5 @@
 # Kioskt
+#### Created by Kaléin Tamaríz
 
 [![FastAPI](https://img.shields.io/badge/Framework-FastAPI-009688.svg?style=plastic&logo=fastapi)](https://fastapi.tiangolo.com/)
 [![Python](https://img.shields.io/badge/Python-v3.10+-3776AB.svg?style=plastic&logo=python)](https://www.python.org/)
@@ -160,6 +161,6 @@ To add a new application, simply create a folder in `apps/`.
 ---
 ## Credits
 
-+ **Author:** <span style="color:green">Kaléin Tamaríz</span>
++ **Author:** <span style="color:green">Kaléin Tamaríz</span> (Created by Kaléin Tamaríz)
 
 + **Maintainer:** Dr. Miguel Rangel

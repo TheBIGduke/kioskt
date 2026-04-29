@@ -1,3 +1,4 @@
+# Created by Kaléin Tamaríz
 import os
 import hashlib
 import subprocess
