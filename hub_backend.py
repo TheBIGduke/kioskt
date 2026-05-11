@@ -21,6 +21,15 @@ def get_dynamic_apps():
             hash_val = int(hashlib.md5(item.encode()).hexdigest(), 16)
             port = 3000 + (hash_val % 5000)
             
+            # Support for fixed port overrides via port.txt
+            port_file = os.path.join(item_path, "port.txt")
+            if os.path.exists(port_file):
+                try:
+                    with open(port_file, "r") as f:
+                        port = int(f.read().strip())
+                except:
+                    pass
+
             app_config = {
                 "id": item,
                 "name": item.replace("_", " ").title(),
