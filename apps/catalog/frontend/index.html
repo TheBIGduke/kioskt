@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<!-- Made by Kaléin Tamaríz -->
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Octopy Inventory</title>
+    <link rel="stylesheet" href="assets/bootstrap.min.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Rajdhani:wght@500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+
+</head>
+
+<body>
+    <canvas id="bg-canvas"></canvas>
+    <div class="atmosphere-layer" aria-hidden="true"></div>
+    <nav class="navbar sticky-top">
+        <div class="container d-flex justify-content-center align-items-center py-2">
+            <div id="filter-dock"></div>
+        </div>
+    </nav>
+
+    <main class="container catalog-main">
+        <div id="catalog-grid" class="row row-cols-1 row-cols-md-2 g-4 pb-5 mb-5">
+            <!-- Populated by JS -->
+        </div>
+    </main>
+
+    <div id="product-detail-view">
+        <div class="detail-close" id="close-detail">&times;</div>
+        <div id="detail-container" class="detail-content">
+            <!-- Populated by JS -->
+        </div>
+    </div>
+
+    <span id="db-status-badge" class="status-badge"
+        title="Database connection failed. Real data requires a connection.">
+        Modo Demo: DB Requerida
+    </span>
+
+    <script src="assets/bootstrap.bundle.min.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>

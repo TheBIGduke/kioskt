@@ -1,0 +1,1076 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OctyFly</title>
+    <style>
+        @font-face {
+            font-family: 'Mario-Kart-DS';
+            src: url('https://static.wfonts.com/data/2014/06/09/mario-kart-ds/Mario-Kart-DS.ttf') format('truetype');
+            font-display: swap;
+        }
+
+        body {
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #000;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #board {
+            background-image: url("./bg.gif");
+            background-size: cover;
+            background-position: center;
+        }
+
+        /* The animated GIF character — positioned absolutely over the canvas */
+        #characterSprite {
+            position: absolute;
+            pointer-events: none;
+            image-rendering: auto;
+        }
+
+        /* Start screen overlay */
+        #startScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-image: url("./home_bg.gif");
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            -ms-interpolation-mode: nearest-neighbor;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            cursor: pointer;
+        }
+
+        #startScreen.hidden {
+            display: none;
+        }
+
+        /* Start screen exit animation */
+        #startScreen.exit {
+            animation: startScreenExit 0.8s ease-in forwards;
+            pointer-events: none;
+        }
+
+        /* Start screen fade-in */
+        #startScreen.fade-in {
+            animation: fadeIn 0.8s ease-in forwards;
+        }
+
+        #startTitle {
+            position: absolute;
+            top: 10vh;
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(110px, 12vw, 140px);
+            color: #fff;
+            text-shadow:
+                0 0 10px rgba(255, 200, 50, 0.8),
+                0 0 30px rgba(255, 150, 0, 0.6),
+                0 0 60px rgba(255, 100, 0, 0.4),
+                3px 3px 0px rgba(0, 0, 0, 0.5);
+            animation: titlePulse 2s ease-in-out infinite, titleFloat 3s ease-in-out infinite;
+            user-select: none;
+        }
+
+        #startSprite {
+            position: absolute;
+            bottom: -13px;
+            left: -10px;
+            height: clamp(450px, 50vh, 600px);
+            image-rendering: auto;
+            pointer-events: none;
+        }
+
+        #touchHint {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: clamp(170px, 18vw, 220px);
+            opacity: 0.8;
+            z-index: 5;
+            pointer-events: none;
+            animation: touchPulse 2.5s ease-in-out infinite;
+        }
+
+        @keyframes touchPulse {
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%) scale(1);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: translate(-50%, -50%) scale(1.15);
+                opacity: 0.9;
+            }
+        }
+
+        /* ===== GAME OVER OVERLAY ===== */
+        #gameOverOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 90;
+            pointer-events: none;
+        }
+
+        #gameOverOverlay.active {
+            display: flex;
+        }
+
+        #gameOverBg {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(ellipse at center, rgba(180, 0, 0, 0.5) 0%, rgba(0, 0, 0, 0.85) 100%);
+            opacity: 0;
+            animation: fadeIn 0.6s ease-out 0.3s forwards;
+        }
+
+        #gameOverText {
+            position: relative;
+            z-index: 2;
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(50px, 10vw, 120px);
+            color: #ff3333;
+            text-shadow:
+                0 0 20px rgba(255, 0, 0, 0.8),
+                0 0 40px rgba(255, 0, 0, 0.5),
+                0 0 80px rgba(255, 0, 0, 0.3),
+                4px 4px 0px rgba(0, 0, 0, 0.7);
+            opacity: 0;
+            transform: scale(3);
+            animation: gameOverSlam 0.5s ease-out 0.5s forwards;
+            user-select: none;
+        }
+
+        #tbdGif {
+            position: fixed;
+            bottom: 0px;
+            right: 20px;
+            width: clamp(100px, 15vw, 200px);
+            z-index: 200;
+            opacity: 1;
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            transform: translateY(100%);
+        }
+
+        #tbdGif.active {
+            transform: translateY(0);
+        }
+
+        #gameOverScore {
+            position: relative;
+            z-index: 2;
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(24px, 5vw, 48px);
+            color: #ffd700;
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.6),
+                2px 2px 0px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+            opacity: 0;
+            animation: scoreReveal 0.5s ease-out 1s forwards;
+            user-select: none;
+        }
+
+        /* Red flash on death */
+        #deathFlash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(255, 0, 0, 0.6);
+            z-index: 80;
+            display: none;
+            pointer-events: none;
+        }
+
+        #deathFlash.active {
+            display: block;
+            animation: flashPulse 0.3s ease-out forwards;
+        }
+
+        @keyframes titlePulse {
+
+            0%,
+            100% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.04);
+            }
+        }
+
+        @keyframes titleFloat {
+
+            0%,
+            100% {
+                margin-top: 0px;
+            }
+
+            50% {
+                margin-top: -15px;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        @keyframes startScreenExit {
+            0% {
+                opacity: 1;
+                transform: scale(1);
+                filter: brightness(1);
+            }
+
+            40% {
+                opacity: 1;
+                transform: scale(1.1);
+                filter: brightness(1.8);
+            }
+
+            100% {
+                opacity: 0;
+                transform: scale(1.3);
+                filter: brightness(3);
+            }
+        }
+
+
+        @keyframes gameOverSlam {
+            0% {
+                opacity: 0;
+                transform: scale(3);
+            }
+
+            60% {
+                opacity: 1;
+                transform: scale(0.9);
+            }
+
+            80% {
+                transform: scale(1.05);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        @keyframes scoreReveal {
+            from {
+                opacity: 0;
+                transform: translateY(15px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes flashPulse {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        @keyframes screenShake {
+
+            0%,
+            100% {
+                transform: translate(0, 0);
+            }
+
+            10% {
+                transform: translate(-8px, 6px);
+            }
+
+            20% {
+                transform: translate(8px, -4px);
+            }
+
+            30% {
+                transform: translate(-6px, 8px);
+            }
+
+            40% {
+                transform: translate(6px, -6px);
+            }
+
+            50% {
+                transform: translate(-4px, 4px);
+            }
+
+            60% {
+                transform: translate(4px, -2px);
+            }
+
+            70% {
+                transform: translate(-2px, 2px);
+            }
+
+            80% {
+                transform: translate(2px, -1px);
+            }
+
+            90% {
+                transform: translate(-1px, 1px);
+            }
+        }
+
+        body.shake {
+            animation: screenShake 0.5s ease-out;
+        }
+
+        /* ===== SCORE HUD ===== */
+        #scoreHud {
+            position: fixed;
+            top: 20px;
+            left: 0;
+            width: 100%;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        #scoreHud.active {
+            display: flex;
+        }
+
+        #scoreValue {
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(48px, 8vw, 80px);
+            color: #fff;
+            text-shadow:
+                0 0 10px rgba(255, 255, 255, 0.6),
+                0 0 25px rgba(100, 200, 255, 0.4),
+                0 0 50px rgba(100, 200, 255, 0.2),
+                3px 3px 0px rgba(0, 0, 0, 0.6);
+            transition: transform 0.15s ease-out, color 0.15s ease-out;
+            user-select: none;
+        }
+
+        #scoreValue.pop {
+            animation: scorePop 0.3s ease-out;
+        }
+
+        @keyframes scorePop {
+            0% {
+                transform: scale(1);
+                color: #fff;
+            }
+
+            30% {
+                transform: scale(1.5);
+                color: #ffd700;
+            }
+
+            60% {
+                transform: scale(0.9);
+            }
+
+            100% {
+                transform: scale(1);
+                color: #fff;
+            }
+        }
+
+        /* ===== TRANSITION FLASH ===== */
+        #transitionFlash {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: #fff;
+            z-index: 200;
+            display: none;
+            pointer-events: none;
+        }
+
+        #transitionFlash.active {
+            display: block;
+            animation: transitionFlashAnim 0.6s ease-out forwards;
+        }
+
+        @keyframes transitionFlashAnim {
+            0% {
+                opacity: 1;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        /* ===== GET READY TEXT ===== */
+        #getReady {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 60;
+            pointer-events: none;
+        }
+
+        #getReady.active {
+            display: flex;
+        }
+
+        #getReadyContent {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+
+        #getReadyText {
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(50px, 10vw, 100px);
+            color: #fff;
+            text-shadow:
+                0 0 15px rgba(255, 255, 255, 0.8),
+                0 0 30px rgba(100, 200, 255, 0.5),
+                3px 3px 0px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            animation: getReadyAnim 1.2s ease-out forwards;
+            user-select: none;
+        }
+
+        @keyframes getReadyAnim {
+            0% {
+                opacity: 0;
+                transform: scale(2);
+            }
+
+            15% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        #tutorialHint {
+            font-family: 'Mario-Kart-DS', 'Courier New', Courier, monospace;
+            font-size: clamp(18px, 3.5vw, 32px);
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow:
+                0 0 10px rgba(255, 255, 255, 0.5),
+                2px 2px 0px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            animation: tutorialFade 2s ease-in-out 0.4s forwards;
+            user-select: none;
+        }
+
+        @keyframes tutorialFade {
+            0% {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            100% {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #tutorialHint.visible {
+            animation: tutorialFade 0.5s ease-out 0.4s forwards, tutorialBlink 1.5s ease-in-out 1s infinite;
+        }
+
+        @keyframes tutorialBlink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.4;
+            }
+        }
+
+        #octopyLogo {
+            position: fixed;
+            top: 2px;
+            right: 2px;
+            height: clamp(10px, 8vh, 100px);
+            z-index: 210;
+            pointer-events: none;
+            opacity: 0.85;
+            filter: drop-shadow(0 0 6px rgba(0, 0, 0, 0.4));
+            transition: opacity 0.3s ease;
+        }
+
+        #octopyLogo.hidden {
+            opacity: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Start Screen -->
+    <div id="startScreen">
+        <div id="startTitle">OctyFly</div>
+        <img id="startSprite" src="./sprite2.gif" alt="Octy">
+        <img id="touchHint" src="./touch.gif" alt="Touch to Start">
+    </div>
+
+    <!-- Game Over Overlay -->
+    <div id="gameOverOverlay">
+        <div id="gameOverBg"></div>
+        <div id="gameOverText">GAME OVER</div>
+        <div id="gameOverScore"></div>
+    </div>
+
+    <!-- Death Flash -->
+    <div id="deathFlash"></div>
+
+    <!-- Score HUD -->
+    <div id="scoreHud">
+        <div id="scoreValue">0</div>
+    </div>
+
+    <!-- Transition Flash -->
+    <div id="transitionFlash"></div>
+
+    <img id="tbdGif" src="./tbd.gif" alt="TBD">
+
+    <!-- Get Ready -->
+    <div id="getReady">
+        <div id="getReadyContent">
+            <div id="getReadyText">GET READY!</div>
+            <div id="tutorialHint">Tap or Press SPACE to Fly</div>
+        </div>
+    </div>
+
+    <canvas id="board"></canvas>
+    <img id="characterSprite" src="./sprite.gif">
+
+    <!-- Octopy Logo (Always Visible) -->
+    <img id="octopyLogo" src="./Octopy.png" alt="Octopy Logo">
+
+    <script>
+        // ==============================================================
+        //  CUSTOMIZABLE SETTINGS (Adjust these to change game feel)
+        // ==============================================================
+        let pipeWidth = 200;            // How wide the pipes are
+        let pipeHeight = 600;           // Height of the pipe sprites
+        let velocityX = -15;            // Initial horizontal speed (negative moves left)
+        let gravity = 0.3;              // How fast the character falls
+        let jumpPower = -6;             // How high the character jumps
+        let hitboxPadding = 30;         // Padding for collision (smaller = more forgiving)
+        let characterWidth = 96;        // Visual width of the character
+        let characterHeight = 150;      // Visual height of the character
+        let homeMusicVolume = 0.5;      // Volume of the start screen music (0.0 to 1.0)
+        let gameMusicVolume = 0.4;      // Max volume of the gameplay music (0.0 to 1.0)
+        // ==============================================================
+
+        // Internal Game State (Avoid changing these)
+        let board, context, characterSprite;
+        let boardWidth = window.innerWidth;
+        let boardHeight = window.innerHeight;
+        let gameStarted = false;
+        let getReadyPhase = false;
+        let hoverTime = 0;
+        let gameOver = false;
+        let score = 0;
+        let pipeInterval;
+        let tbdGif;
+        let tbdShownAt19 = false;
+        let pipeArray = [];
+        let pipeImages = [];
+        let pipeX = window.innerWidth;
+        let pipeY = 0;
+        let velocityY = 0;
+
+        let characterX = boardWidth / 3;
+        let characterY = boardHeight / 2;
+        let character = { x: characterX, y: characterY, width: characterWidth, height: characterHeight };
+
+        const sfxWing = new Audio("./sfx/sfx_wing.wav");
+        const sfxPoint = new Audio("./sfx/sfx_point.wav");
+        const sfxHit = new Audio("./sfx/sfx_hit.wav");
+        const sfxDie = new Audio("./sfx/sfx_die.wav");
+        const sfxSwooshing = new Audio("./sfx/sfx_swooshing.wav");
+        const sfxHome = new Audio("./sfx/sfx_home.wav");
+        sfxHome.loop = true;
+        sfxHome.volume = homeMusicVolume;
+        const bgm = new Audio("./sfx/sfx_loop.wav");
+        bgm.loop = true;
+        bgm.volume = 0;
+        sfxWing.playbackRate = 1.8;
+
+        function playSound(audio) {
+            const clone = audio.cloneNode();
+            clone.playbackRate = audio.playbackRate;
+            clone.play();
+        }
+
+        let bgmFadeInterval;
+        function fadeInBgm(duration) {
+            const targetVolume = gameMusicVolume;
+            bgm.volume = 0;
+            bgm.play();
+            clearInterval(bgmFadeInterval);
+            const step = 0.05;
+            const interval = duration / (targetVolume / step);
+            bgmFadeInterval = setInterval(() => {
+                if (bgm.volume + step >= targetVolume) {
+                    bgm.volume = targetVolume;
+                    clearInterval(bgmFadeInterval);
+                } else {
+                    bgm.volume += step;
+                }
+            }, interval);
+        }
+
+        function stopBgm() {
+            clearInterval(bgmFadeInterval);
+            bgm.pause();
+            bgm.currentTime = 0;
+            bgm.volume = 0;
+        }
+
+        // Move the <img> element to match the character's position
+        function updateCharacterSprite() {
+            characterSprite.style.left = character.x + "px";
+            characterSprite.style.top = character.y + "px";
+            characterSprite.style.width = character.width + "px";
+            characterSprite.style.height = character.height + "px";
+        }
+
+        function showTbd(duration) {
+            if (!tbdGif) return;
+            tbdGif.classList.add("active");
+            setTimeout(() => {
+                tbdGif.classList.remove("active");
+            }, duration);
+        }
+
+        window.onload = function () {
+            board = document.getElementById("board");
+            characterSprite = document.getElementById("characterSprite");
+
+            // Deactivate everything until game starts
+            board.style.display = "none";
+            characterSprite.style.display = "none";
+
+            resizeBoard();
+            context = board.getContext("2d");
+
+            for (let i = 1; i <= 5; i++) {
+                let img = new Image();
+                img.src = `./obstacles/${i}.png`;
+                pipeImages.push(img);
+            }
+
+            // Listen for input but don't start the game loop yet
+            document.addEventListener("keydown", handleInput);
+            document.addEventListener("touchstart", handleInput);
+            document.addEventListener("mousedown", handleInput);
+            window.addEventListener("resize", resizeBoard);
+
+            // Play home tune on start screen
+            sfxHome.play();
+
+            tbdGif = document.getElementById("tbdGif");
+
+            // Random TBD on home screen
+            setInterval(() => {
+                const startScreen = document.getElementById("startScreen");
+                if (startScreen && !startScreen.classList.contains("hidden") && Math.random() < 0.1) {
+                    showTbd(1500 + Math.random() * 1500);
+                }
+            }, 25000);
+        }
+
+        function handleInput(e) {
+            // For keyboard, only respond to Space, ArrowUp, KeyX
+            if (e.type === "keydown" && e.code !== "Space" && e.code !== "ArrowUp" && e.code !== "KeyX") {
+                return;
+            }
+
+            if (!gameStarted) {
+                startGame();
+                return;
+            }
+
+            // End get-ready phase on first input
+            if (getReadyPhase) {
+                getReadyPhase = false;
+                document.getElementById('getReady').classList.remove('active');
+                if (pipeInterval) clearInterval(pipeInterval);
+                pipeInterval = setInterval(placePipes, 1000);
+            }
+
+            jump(e);
+        }
+
+        function startGame() {
+            gameStarted = true;
+            gameOver = false;
+            score = 0;
+            pipeArray = [];
+            velocityY = 0;
+            velocityX = -15;
+            gravity = 0.3;
+
+            // Animate start screen exit
+            const startScreen = document.getElementById('startScreen');
+            startScreen.classList.add('exit');
+
+            // Show white flash after exit animation
+            setTimeout(() => {
+                const flash = document.getElementById('transitionFlash');
+                flash.classList.remove('active');
+                void flash.offsetWidth;
+                flash.classList.add('active');
+
+                // Now hide start screen and show game
+                startScreen.classList.add('hidden');
+                startScreen.classList.remove('exit');
+
+                // Activate game board and character
+                board.style.display = "block";
+                characterSprite.style.display = "block";
+                characterSprite.src = "./sprite.gif";
+                updateCharacterSprite();
+
+                // Show "GET READY!" text
+                const getReady = document.getElementById('getReady');
+                const getReadyText = document.getElementById('getReadyText');
+                const tutorialHint = document.getElementById('tutorialHint');
+                getReadyText.style.animation = 'none';
+                tutorialHint.classList.remove('visible');
+                tutorialHint.style.animation = 'none';
+                void getReadyText.offsetWidth;
+                void tutorialHint.offsetWidth;
+                getReadyText.style.animation = '';
+                tutorialHint.style.animation = '';
+                tutorialHint.classList.add('visible');
+                getReady.classList.add('active');
+
+                // Enter get-ready hover phase (no gravity, no pipes)
+                // Waits for user input to begin
+                getReadyPhase = true;
+                hoverTime = 0;
+
+                // Show and reset score HUD
+                const scoreHud = document.getElementById('scoreHud');
+                const scoreVal = document.getElementById('scoreValue');
+                scoreHud.classList.add('active');
+                scoreVal.textContent = '0';
+
+                // Stop home tune, fade in game music
+                sfxHome.pause();
+                sfxHome.currentTime = 0;
+                tbdShownAt19 = false;
+                fadeInBgm(2000);
+                requestAnimationFrame(update);
+            }, 600); // Wait for exit animation to finish
+        }
+
+        function showGameOver() {
+            // Hide score HUD and logo
+            document.getElementById('scoreHud').classList.remove('active');
+            document.getElementById('octopyLogo').classList.add('hidden');
+
+            // Screen shake
+            document.body.classList.add('shake');
+            setTimeout(() => document.body.classList.remove('shake'), 500);
+
+            // Red flash
+            const flash = document.getElementById('deathFlash');
+            flash.classList.remove('active');
+            void flash.offsetWidth; // force reflow
+            flash.classList.add('active');
+
+            // Show game over overlay with score
+            const overlay = document.getElementById('gameOverOverlay');
+            const scoreText = document.getElementById('gameOverScore');
+            scoreText.textContent = 'Score: ' + Math.floor(score);
+
+            // Reset animations
+            overlay.classList.remove('active');
+            void overlay.offsetWidth;
+            overlay.classList.add('active');
+
+            // Reset child animations
+            const bg = document.getElementById('gameOverBg');
+            const text = document.getElementById('gameOverText');
+            bg.style.animation = 'none'; void bg.offsetWidth; bg.style.animation = '';
+            text.style.animation = 'none'; void text.offsetWidth; text.style.animation = '';
+            scoreText.style.animation = 'none'; void scoreText.offsetWidth; scoreText.style.animation = '';
+        }
+
+        function hideGameOver() {
+            document.getElementById('gameOverOverlay').classList.remove('active');
+            document.getElementById('deathFlash').classList.remove('active');
+        }
+
+        function resetToStartScreen() {
+            gameStarted = false;
+            gameOver = false;
+            score = 0;
+            pipeArray = [];
+            velocityY = 0;
+
+            // Hide game over
+            hideGameOver();
+
+            // Hide score HUD, show logo
+            document.getElementById('scoreHud').classList.remove('active');
+            document.getElementById('octopyLogo').classList.remove('hidden');
+
+            // Show start screen with fade-in
+            const startScreen = document.getElementById('startScreen');
+            startScreen.classList.remove('hidden', 'fade-in');
+            void startScreen.offsetWidth;
+            startScreen.classList.add('fade-in');
+
+            board.style.display = "none";
+            characterSprite.style.display = "none";
+
+            // Stop game sound/loops, start home tune
+            stopBgm();
+            if (pipeInterval) clearInterval(pipeInterval);
+            sfxHome.play();
+
+            // Reset character position
+            character.y = characterY;
+        }
+
+        function endGame() {
+            stopBgm();
+            showGameOver();
+            setTimeout(() => {
+                resetToStartScreen();
+            }, 3500); // 3.5 second delay to see game over screen
+        }
+
+        function resizeBoard() {
+            boardWidth = window.innerWidth;
+            boardHeight = window.innerHeight;
+            board.width = boardWidth;
+            board.height = boardHeight;
+            pipeX = boardWidth;
+            characterX = boardWidth / 3;
+            characterY = boardHeight / 2;
+            character.x = characterX;
+            if (gameStarted) {
+                updateCharacterSprite();
+            }
+        }
+
+        function update() {
+            if (!gameStarted) return;
+            requestAnimationFrame(update);
+
+            context.clearRect(0, 0, board.width, board.height);
+
+            // Move the sprite <img> to current position (GIF animates natively)
+            updateCharacterSprite();
+
+            if (gameOver) {
+                return;
+            }
+
+            // Get-ready hover phase — gentle float, no gravity
+            if (getReadyPhase) {
+                hoverTime += 0.05;
+                character.y = characterY + Math.sin(hoverTime * 3) * 15;
+                return;
+            }
+
+            //character physics
+            velocityY += gravity;
+            character.y = Math.max(character.y + velocityY, 0);
+
+            if (character.y > board.height) {
+                if (!gameOver) {
+                    playSound(sfxDie);
+                    characterSprite.src = "./explosion.gif?t=" + Date.now();
+                    setTimeout(() => {
+                        if (gameOver) characterSprite.style.display = "none";
+                    }, 1000);
+                    endGame();
+                }
+                gameOver = true;
+            }
+
+            //pipes
+            for (let i = 0; i < pipeArray.length; i++) {
+                let pipe = pipeArray[i];
+                pipe.x += velocityX;
+                if (pipe.isTop) {
+                    context.save();
+                    context.translate(pipe.x + pipe.width / 2, pipe.y + pipe.height / 2);
+                    context.rotate(Math.PI);
+                    context.drawImage(pipe.img, -pipe.width / 2, -pipe.height / 2, pipe.width, pipe.height);
+                    context.restore();
+                } else {
+                    context.drawImage(pipe.img, pipe.x, pipe.y, pipe.width, pipe.height);
+                }
+
+                if (!pipe.passed && character.x > pipe.x + pipe.width) {
+                    score += 0.5;
+                    if (Number.isInteger(score)) {
+                        playSound(sfxPoint);
+                        // Update score HUD with pop animation
+                        const scoreVal = document.getElementById('scoreValue');
+                        scoreVal.textContent = score;
+                        scoreVal.classList.remove('pop');
+                        void scoreVal.offsetWidth;
+                        scoreVal.classList.add('pop');
+
+                        // Increase difficulty every 20 points
+                        if (score > 0 && score % 20 === 0) {
+                            increaseDifficulty();
+                        }
+
+                        // Show TBD at 19 points
+                        if (score === 19 && !tbdShownAt19) {
+                            showTbd(2000);
+                            tbdShownAt19 = true;
+                        }
+                    }
+                    pipe.passed = true;
+                }
+
+                if (detectCollision(character, pipe)) {
+                    if (!gameOver) {
+                        playSound(sfxHit);
+                        setTimeout(() => playSound(sfxDie), 500);
+                        characterSprite.src = "./explosion.gif?t=" + Date.now();
+                        setTimeout(() => {
+                            if (gameOver) characterSprite.style.display = "none";
+                        }, 1000);
+                        endGame();
+                    }
+                    gameOver = true;
+                }
+            }
+
+            //clear pipes that are off screen
+            while (pipeArray.length > 0 && pipeArray[0].x < -pipeWidth) {
+                pipeArray.shift();
+            }
+        }
+
+        function placePipes() {
+            if (gameOver) { return; }
+
+            let randomPipeY = pipeY - pipeHeight / 4 - Math.random() * (pipeHeight / 2);
+            let difficultyLevel = Math.floor(score / 20);
+            let openingSpace = board.height / (2 + Math.min(1, difficultyLevel * 0.2));
+
+            let topImg = pipeImages[Math.floor(Math.random() * pipeImages.length)];
+            let bottomImg = pipeImages[Math.floor(Math.random() * pipeImages.length)];
+
+            pipeArray.push({
+                img: topImg,
+                x: pipeX, y: randomPipeY,
+                width: pipeWidth, height: pipeHeight,
+                passed: false,
+                isTop: true
+            });
+
+            pipeArray.push({
+                img: bottomImg,
+                x: pipeX, y: randomPipeY + pipeHeight + openingSpace,
+                width: pipeWidth, height: pipeHeight,
+                passed: false,
+                isTop: false
+            });
+        }
+
+        function jump() {
+            if (gameOver) return;
+
+            velocityY = jumpPower;
+            playSound(sfxWing);
+        }
+
+        function detectCollision(a, b) {
+            let ax = a.x + hitboxPadding;
+            let ay = a.y + hitboxPadding;
+            let aw = a.width - hitboxPadding * 2;
+            let ah = a.height - hitboxPadding * 2;
+            return ax < b.x + b.width &&
+                ax + aw > b.x &&
+                ay < b.y + b.height &&
+                ay + ah > b.y;
+        }
+
+        function increaseDifficulty() {
+            // Increase speed & gravity
+            velocityX -= 1.5;
+            gravity += 0.02;
+
+            // Faster pipe spawning
+            const currentMilestone = Math.floor(score / 20);
+            const newInterval = Math.max(600, 1500 - (currentMilestone * 150));
+
+            if (pipeInterval) clearInterval(pipeInterval);
+            pipeInterval = setInterval(placePipes, newInterval);
+        }
+    </script>
+</body>
+
+</html>
