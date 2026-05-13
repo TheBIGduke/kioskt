@@ -3,3 +3,4 @@ apps/videos/media
 __pycache__
 hub.log
 .venv
+apps/

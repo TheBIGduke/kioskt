@@ -1,7 +1,0 @@
-__pycache__
-.venv
-certs
-.env
-/frontend/assets
-*.db
-.cursor
