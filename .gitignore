@@ -1,3 +1,5 @@
 apps/videos/media
 .vscode
 __pycache__
+hub.log
+.venv

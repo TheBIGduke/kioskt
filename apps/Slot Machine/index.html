@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vegas High Roller Ultimate</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fugaz+One&family=Monoton&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --gold-light: #fffacd;
+            --gold-mid: #ffd700;
+            --gold-dark: #b8860b;
+            --neon-blue: #00f3ff;
+            --neon-pink: #ff00ff;
+            --bulb-on: #ffeb3b;
+            --bulb-off: #4a3b00;
+            --chrome-grad: linear-gradient(135deg, #aaa 0%, #fff 50%, #888 100%);
+            --btn-red: #ff0000;
+        }
+
+        body {
+            background-color: #050505;
+            background-image: 
+                radial-gradient(circle at 50% 0%, #220000 0%, #000 80%),
+                repeating-linear-gradient(45deg, rgba(255,215,0,0.02) 0px, rgba(255,215,0,0.02) 2px, transparent 2px, transparent 10px);
+            color: white;
+            font-family: 'Fugaz One', cursive;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            perspective: 1500px;
+        }
+
+        /* --- Cabinet Body --- */
+        .cabinet-body {
+            background: linear-gradient(105deg, #330000 0%, #5e0000 50%, #330000 100%);
+            border-radius: 40px 40px 10px 10px;
+            padding: 35px;
+            position: relative;
+            transform: rotateX(5deg);
+            transform-style: preserve-3d;
+            box-shadow: 
+                0 50px 100px rgba(0,0,0,0.9),
+                inset 0 0 0 2px rgba(255,215,0,0.3),
+                0 0 50px rgba(255, 0, 0, 0.2);
+            width: 95%;
+            max-width: 580px;
+            border: 4px solid #220000;
+            transition: transform 0.3s ease;
+        }
+
+        /* --- Light Track --- */
+        .light-track {
+            position: absolute;
+            top: 5px; left: 5px; right: 5px; bottom: 5px;
+            border-radius: 35px 35px 5px 5px;
+            border: 10px solid #111;
+            box-shadow: 
+                inset 0 0 10px #000, 
+                0 0 5px rgba(255,255,255,0.2);
+            pointer-events: none;
+            z-index: 1;
+        }
+        
+        .bulb-container-top, .bulb-container-bottom {
+            position: absolute; left: 20px; right: 20px; height: 20px;
+            display: flex; justify-content: space-evenly; align-items: center;
+        }
+        .bulb-container-top { top: -6px; }
+        .bulb-container-bottom { bottom: -6px; }
+
+        .bulb-container-left, .bulb-container-right {
+            position: absolute; top: 20px; bottom: 20px; width: 20px;
+            display: flex; flex-direction: column; justify-content: space-evenly; align-items: center;
+        }
+        .bulb-container-left { left: -6px; }
+        .bulb-container-right { right: -6px; }
+
+        .bulb {
+            width: 12px; height: 12px;
+            background: var(--bulb-off);
+            border-radius: 50%;
+            box-shadow: inset -2px -2px 5px rgba(0,0,0,0.5);
+            transition: background 0.1s;
+        }
+        .bulb.active {
+            background: var(--bulb-on);
+            box-shadow: 0 0 10px var(--bulb-on), 0 0 20px var(--bulb-on), inset -1px -1px 2px rgba(255,255,255,0.5);
+        }
+        .bulb.win-mode {
+            background: #00ff00;
+            box-shadow: 0 0 15px #00ff00;
+        }
+
+        /* --- Header (Always Blue) --- */
+        .cabinet-header {
+            background: #000;
+            border: 6px solid #333;
+            border-radius: 15px;
+            padding: 15px;
+            position: relative;
+            transform: translateZ(40px);
+            margin-bottom: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+            z-index: 10;
+            text-align: center;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 80px;
+        }
+
+        .cabinet-header::before {
+            content: ''; position: absolute; top:0; left:0; width:100%; height:100%;
+            background-image: linear-gradient(rgba(50,50,50,0.3) 1px, transparent 1px), linear-gradient(90deg, rgba(50,50,50,0.3) 1px, transparent 1px);
+            background-size: 4px 4px;
+            z-index: 1;
+            opacity: 0.5;
+        }
+
+        .status-text {
+            font-family: 'Monoton', cursive;
+            font-size: 2.2rem;
+            color: #fff;
+            text-shadow: 
+                0 0 5px #fff,
+                0 0 10px #fff,
+                0 0 20px var(--neon-blue),
+                0 0 40px var(--neon-blue),
+                0 0 80px var(--neon-blue);
+            z-index: 2;
+            line-height: 1;
+            letter-spacing: 2px;
+            animation: flicker-blue 4s infinite;
+        }
+        
+        @keyframes flicker-blue {
+            0%, 19%, 21%, 23%, 25%, 54%, 56%, 100% { opacity: 1; }
+            20%, 24%, 55% { opacity: 0.6; }
+        }
+
+        /* --- Reel Casing --- */
+        .reel-casing {
+            background: #111;
+            padding: 15px;
+            border-radius: 15px;
+            border: 4px solid #444;
+            box-shadow: 
+                0 0 20px rgba(0,0,0,0.8),
+                0 0 25px var(--neon-blue);
+            position: relative;
+            transform: translateZ(20px);
+            margin: 0 15px;
+            z-index: 5;
+        }
+        
+        .reel-casing::before {
+            content: '';
+            position: absolute;
+            top: -6px; left: -6px; right: -6px; bottom: -6px;
+            background: var(--chrome-grad);
+            border-radius: 18px;
+            z-index: -1;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.5);
+        }
+
+        .reels-flex {
+            display: flex;
+            gap: 0; 
+            height: 240px;
+            background: #000;
+            border-radius: 8px;
+            overflow: hidden;
+            position: relative;
+            border: 2px solid #333;
+        }
+
+        .payline-highlight {
+            position: absolute;
+            top: 50%; left: 0; right: 0;
+            height: 70px;
+            transform: translateY(-50%);
+            background: linear-gradient(to right, rgba(255,255,255,0), rgba(255,255,255,0.05) 50%, rgba(255,255,255,0));
+            border-top: 1px solid rgba(0, 243, 255, 0.4);
+            border-bottom: 1px solid rgba(0, 243, 255, 0.4);
+            pointer-events: none;
+            z-index: 20;
+            box-shadow: 0 0 10px rgba(0, 243, 255, 0.1);
+        }
+
+        .reel-col {
+            flex: 1;
+            background: #f0f0f0;
+            position: relative;
+            mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+            -webkit-mask-image: linear-gradient(to bottom, transparent, black 15%, black 85%, transparent);
+        }
+        
+        .reel-col::after {
+            content: ''; position: absolute; top:0; left:0; right:0; bottom:0;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8) 0%, transparent 30%, transparent 70%, rgba(0,0,0,0.8) 100%);
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        .reel-separator {
+            width: 6px;
+            background: linear-gradient(to bottom, #333, #111, #333);
+            border-left: 1px solid #555;
+            border-right: 1px solid #555;
+            z-index: 15;
+            box-shadow: inset 0 0 2px #000;
+        }
+
+        .symbol {
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: scale(0.9); 
+        }
+        
+        .symbol svg {
+            width: 85px; height: 85px;
+            filter: drop-shadow(0 5px 3px rgba(0,0,0,0.4));
+        }
+
+        /* --- Control Deck --- */
+        .control-deck {
+            margin-top: -10px;
+            background: linear-gradient(to bottom, #444, #111);
+            padding: 30px 20px;
+            border-radius: 0 0 35px 35px;
+            transform: translateZ(50px) rotateX(-15deg);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            border-top: 2px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: relative;
+            gap: 15px;
+        }
+
+        /* --- Sticky Note Paytable (Cleaned) --- */
+        .paytable-note {
+            background-color: #fdfbf7;
+            background: linear-gradient(to bottom, #fffdf5, #f0e6d2);
+            background-size: 10px 10px;
+            padding: 15px;
+            width: 65%;
+            transform: rotate(-1.5deg);
+            box-shadow: 2px 3px 5px rgba(0,0,0,0.4);
+            font-family: 'Share Tech Mono', monospace;
+            color: #222;
+            font-size: 0.85rem;
+            position: relative;
+            border: 1px solid #d4c5a3;
+        }
+
+        .paytable-note::after {
+            content: '';
+            position: absolute;
+            top: -12px; left: 50%; transform: translateX(-50%);
+            width: 60px; height: 25px;
+            background: rgba(255,255,255,0.3);
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+            backdrop-filter: blur(1px);
+        }
+
+        .pay-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            font-weight: bold;
+        }
+        .pay-row span:last-child { 
+            color: #c0392b; 
+            text-align: right;
+        }
+
+        /* --- Red Glowing Spin Button --- */
+        .btn-housing {
+            width: 100px; height: 100px;
+            background: #111;
+            border-radius: 50%;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.5), inset 0 0 10px #000;
+            padding: 8px;
+            position: relative;
+        }
+        
+        .spin-btn {
+            width: 100%; height: 100%;
+            border-radius: 50%;
+            border: none;
+            background: radial-gradient(circle at 35% 35%, #ff4d4d, #990000);
+            /* Massive red glow */
+            box-shadow: 
+                0 0 10px var(--btn-red),
+                0 0 20px var(--btn-red),
+                inset 0 0 10px rgba(0,0,0,0.5);
+            color: white;
+            font-family: 'Fugaz One', cursive;
+            font-size: 1.2rem;
+            cursor: pointer;
+            transition: all 0.1s;
+            text-shadow: 0 2px 2px rgba(0,0,0,0.5);
+            animation: btn-pulse 1.5s infinite alternate;
+        }
+        
+        .spin-btn:active {
+            transform: scale(0.95);
+            box-shadow: 0 0 5px var(--btn-red), inset 0 0 20px rgba(0,0,0,0.8);
+        }
+        
+        .spin-btn:disabled {
+            filter: grayscale(0.5);
+            animation: none;
+            cursor: not-allowed;
+            box-shadow: 0 0 5px #550000;
+        }
+
+        @keyframes btn-pulse {
+            from { box-shadow: 0 0 10px var(--btn-red), 0 0 20px var(--btn-red); }
+            to { box-shadow: 0 0 20px var(--btn-red), 0 0 40px var(--btn-red); }
+        }
+
+        /* Confetti */
+        #fx-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            pointer-events: none; z-index: 100;
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="fx-canvas"></canvas>
+
+    <div class="cabinet-body">
+        
+        <div class="light-track">
+            <div class="bulb-container-top" id="bulbs-top"></div>
+            <div class="bulb-container-right" id="bulbs-right"></div>
+            <div class="bulb-container-bottom" id="bulbs-bottom"></div>
+            <div class="bulb-container-left" id="bulbs-left"></div>
+        </div>
+
+        <div class="cabinet-header">
+            <div class="status-text" id="status-text">PRUEBA TU SUERTE</div>
+        </div>
+
+        <div class="reel-casing">
+            <div class="reels-flex">
+                <div class="payline-highlight"></div>
+                
+                <div class="reel-col">
+                    <div class="reel-strip" id="strip-1"></div>
+                </div>
+                <div class="reel-separator"></div>
+                <div class="reel-col">
+                    <div class="reel-strip" id="strip-2"></div>
+                </div>
+                <div class="reel-separator"></div>
+                <div class="reel-col">
+                    <div class="reel-strip" id="strip-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="control-deck">
+            
+            <div class="paytable-note">
+                <div class="text-center border-b border-gray-400 mb-2 pb-1 font-bold tracking-widest text-xs">PREMIOS DISPONIBLES</div>
+                <div class="pay-row"><span>7️⃣7️⃣7️⃣</span> <span>CARRO DEPORTIVO</span></div>
+                <div class="pay-row"><span>💎💎💎</span> <span>TERMO</span></div>
+                <div class="pay-row"><span>🔔🔔🔔</span> <span>CÓDIGO PROMOCIONAL</span></div>
+                <div class="pay-row"><span>🔶🔶🔶</span> <span>GUITARRA</span></div>
+                <div class="pay-row"><span>🍋🍋🍋</span> <span>DESCUENTO DEL 10%</span></div>
+            </div>
+
+            <div class="btn-housing">
+                <button class="spin-btn" id="spin-btn" onclick="spin()">gira</button>
+            </div>
+
+        </div>
+
+    </div>
+
+    <script>
+        const svgIcons = {
+            seven: `<svg viewBox="0 0 100 100"><defs><linearGradient id="g7" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#FFD700;stop-opacity:1" /><stop offset="50%" style="stop-color:#FFA500;stop-opacity:1" /><stop offset="100%" style="stop-color:#FF6B00;stop-opacity:1" /></linearGradient><radialGradient id="g7shine"><stop offset="0%" style="stop-color:#FFFF99;stop-opacity:0.8" /><stop offset="100%" style="stop-color:#FFFF99;stop-opacity:0" /></radialGradient></defs><rect x="10" y="10" width="80" height="80" rx="10" fill="url(#g7)" stroke="#000" stroke-width="6"/><path d="M28 38 L68 38 L45 72 L32 72 L52 42 L28 42 Z" fill="#FF0000" stroke="#000" stroke-width="3"/><circle cx="35" cy="32" r="10" fill="#FFFF00" stroke="#000" stroke-width="2"/><circle cx="65" cy="55" r="8" fill="#FFFF00" stroke="#000" stroke-width="2"/><circle cx="40" cy="50" r="5" fill="url(#g7shine)" opacity="0.7"/></svg>`,
+            cherry: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gcherry" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#FF5555;stop-opacity:1" /><stop offset="100%" style="stop-color:#CC0000;stop-opacity:1" /></linearGradient><linearGradient id="gstem" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#22AA22;stop-opacity:1" /><stop offset="100%" style="stop-color:#004400;stop-opacity:1" /></linearGradient><radialGradient id="cherryshine"><stop offset="0%" style="stop-color:#FFCCCC;stop-opacity:1" /><stop offset="100%" style="stop-color:#FFCCCC;stop-opacity:0" /></radialGradient></defs><path d="M48 12 Q52 5 58 10 Q56 22 50 28 Q44 22 42 10 Q44 5 48 12" stroke="url(#gstem)" stroke-width="3" fill="url(#gstem)" stroke-linejoin="round"/><circle cx="28" cy="68" r="22" fill="url(#gcherry)" stroke="#000" stroke-width="4"/><circle cx="72" cy="68" r="22" fill="url(#gcherry)" stroke="#000" stroke-width="4"/><circle cx="20" cy="60" r="6" fill="url(#cherryshine)"/><circle cx="75" cy="65" r="5" fill="url(#cherryshine)"/><circle cx="30" cy="75" r="4" fill="#000" opacity="0.3"/><circle cx="70" cy="75" r="4" fill="#000" opacity="0.3"/></svg>`,
+            bell: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gbell" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#FFE44D;stop-opacity:1" /><stop offset="50%" style="stop-color:#FFD700;stop-opacity:1" /><stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" /></linearGradient><radialGradient id="bellshine" cx="35%" cy="35%"><stop offset="0%" style="stop-color:#FFFF99;stop-opacity:0.9" /><stop offset="100%" style="stop-color:#FFFF99;stop-opacity:0" /></radialGradient></defs><path d="M50 12 Q78 18 82 52 L88 82 L12 82 L18 52 Q22 18 50 12 Z" fill="url(#gbell)" stroke="#000" stroke-width="5" stroke-linejoin="round"/><circle cx="50" cy="84" r="8" fill="#FF5500" stroke="#000" stroke-width="3"/><circle cx="45" cy="42" r="6" fill="url(#bellshine)"/><circle cx="60" cy="48" r="5" fill="url(#bellshine)"/><path d="M35 60 Q50 65 65 60" stroke="#000" stroke-width="1.5" fill="none" opacity="0.4"/></svg>`,
+            bar: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gbar" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#2a2a2a;stop-opacity:1" /><stop offset="50%" style="stop-color:#0a0a0a;stop-opacity:1" /><stop offset="100%" style="stop-color:#1a1a1a;stop-opacity:1" /></linearGradient><linearGradient id="gbarborder" x1="0%" y1="0%" x2="0%" y2="100%"><stop offset="0%" style="stop-color:#FFE44D;stop-opacity:1" /><stop offset="100%" style="stop-color:#FF8800;stop-opacity:1" /></linearGradient></defs><rect x="6" y="28" width="88" height="44" rx="8" fill="url(#gbar)" stroke="#000" stroke-width="6"/><rect x="6" y="28" width="88" height="44" rx="8" fill="url(#gbarborder)" opacity="0.5" stroke="none"/><text x="50" y="64" text-anchor="middle" font-family="Arial, sans-serif" font-weight="900" fill="#FFD700" font-size="32" letter-spacing="4" stroke="#000" stroke-width="1">BAR</text><rect x="15" y="34" width="70" height="8" rx="4" fill="#FFD700" opacity="0.25" stroke="none"/></svg>`,
+            diamond: `<svg viewBox="0 0 100 100"><defs><linearGradient id="gdiamond" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#00FFFF;stop-opacity:1" /><stop offset="50%" style="stop-color:#0099FF;stop-opacity:1" /><stop offset="100%" style="stop-color:#0044FF;stop-opacity:1" /></linearGradient><linearGradient id="gdiamondtop" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFFFFF;stop-opacity:0.9" /><stop offset="100%" style="stop-color:#FFFFFF;stop-opacity:0.2" /></linearGradient></defs><path d="M15 45 L50 8 L85 45 L50 98 Z" fill="url(#gdiamond)" stroke="#000" stroke-width="5" stroke-linejoin="round"/><path d="M15 45 L50 8 L50 55 Z" fill="url(#gdiamondtop)" opacity="0.7"/><path d="M32 45 L50 28 L50 55 Z" fill="#FFFFFF" opacity="0.5"/><circle cx="42" cy="35" r="4" fill="#FFFFFF" opacity="0.9"/><circle cx="58" cy="50" r="3" fill="#FFFFFF" opacity="0.7"/><path d="M50 8 L50 98" stroke="#000" stroke-width="1" opacity="0.3"/></svg>`,
+            lemon: `<svg viewBox="0 0 100 100"><defs><linearGradient id="glemon" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" style="stop-color:#FFFF33;stop-opacity:1" /><stop offset="50%" style="stop-color:#FFD700;stop-opacity:1" /><stop offset="100%" style="stop-color:#FFA500;stop-opacity:1" /></linearGradient><radialGradient id="lemonshine" cx="25%" cy="25%"><stop offset="0%" style="stop-color:#FFFF99;stop-opacity:0.8" /><stop offset="100%" style="stop-color:#FFFF99;stop-opacity:0" /></radialGradient></defs><ellipse cx="50" cy="50" rx="40" ry="32" fill="url(#glemon)" stroke="#000" stroke-width="5"/><ellipse cx="32" cy="28" rx="10" ry="8" fill="#FFFF99" opacity="0.7" stroke="#000" stroke-width="2"/><ellipse cx="68" cy="32" rx="8" ry="7" fill="#FFFF99" opacity="0.6" stroke="#000" stroke-width="2"/><circle cx="85" cy="50" r="5" fill="#886600" stroke="#000" stroke-width="2"/><circle cx="15" cy="50" r="5" fill="#886600" stroke="#000" stroke-width="2"/><path d="M45 78 Q50 86 55 78" stroke="#886600" stroke-width="3" fill="none" stroke-linecap="round"/><circle cx="50" cy="40" r="8" fill="url(#lemonshine)"/></svg>`
+        };
+
+        const symbols = [
+            { id: 'seven',   weight: 1,  prize: 'SPORTS CAR', svg: svgIcons.seven },
+            { id: 'diamond', weight: 3,  prize: 'RING',       svg: svgIcons.diamond },
+            { id: 'bell',    weight: 5,  prize: '4K TV',      svg: svgIcons.bell },
+            { id: 'bar',     weight: 8,  prize: 'GUITAR',     svg: svgIcons.bar },
+            { id: 'lemon',   weight: 10, prize: 'TEDDY BEAR', svg: svgIcons.lemon },
+            { id: 'cherry',  weight: 12, prize: 'CANDY',      svg: svgIcons.cherry }
+        ];
+
+        let isSpinning = false;
+        let lightInterval;
+        const bulbs = [];
+        const statusText = document.getElementById('status-text');
+        const strips = [document.getElementById('strip-1'), document.getElementById('strip-2'), document.getElementById('strip-3')];
+        const spinBtn = document.getElementById('spin-btn');
+
+        function initLights() {
+            const createBulbs = (containerId, count) => {
+                const container = document.getElementById(containerId);
+                for(let i=0; i<count; i++) {
+                    const b = document.createElement('div');
+                    b.className = 'bulb';
+                    container.appendChild(b);
+                    bulbs.push(b);
+                }
+            };
+            createBulbs('bulbs-top', 12);
+            createBulbs('bulbs-right', 8);
+            createBulbs('bulbs-bottom', 12);
+            createBulbs('bulbs-left', 8);
+
+            startLightPattern('idle');
+        }
+
+        function startLightPattern(pattern) {
+            if(lightInterval) clearInterval(lightInterval);
+            
+            bulbs.forEach(b => {
+                b.className = 'bulb';
+                b.style.background = '';
+                b.style.boxShadow = '';
+            });
+
+            if (pattern === 'idle') {
+                let offset = 0;
+                lightInterval = setInterval(() => {
+                    bulbs.forEach((b, i) => {
+                        if ((i + offset) % 3 === 0) b.classList.add('active');
+                        else b.classList.remove('active');
+                    });
+                    offset++;
+                }, 200);
+            } 
+            else if (pattern === 'spin') {
+                let offset = 0;
+                lightInterval = setInterval(() => {
+                    bulbs.forEach((b, i) => {
+                        if ((i + offset) % bulbs.length < 5) b.classList.add('active');
+                        else b.classList.remove('active');
+                    });
+                    offset += 2; 
+                }, 50);
+            }
+            else if (pattern === 'win') {
+                lightInterval = setInterval(() => {
+                    bulbs.forEach(b => {
+                        if(Math.random() > 0.5) {
+                            b.classList.add('win-mode');
+                            const hue = Math.floor(Math.random() * 360);
+                            b.style.background = `hsl(${hue}, 100%, 50%)`;
+                            b.style.boxShadow = `0 0 15px hsl(${hue}, 100%, 50%)`;
+                        } else {
+                            b.classList.remove('win-mode');
+                            b.style.background = '';
+                            b.style.boxShadow = '';
+                        }
+                    });
+                }, 100);
+            }
+        }
+
+        const SYMBOL_HEIGHT = 120;
+        const OFFSET = 60; 
+
+        function initReels() {
+            strips.forEach(strip => {
+                strip.innerHTML = '';
+                for(let i=0; i<5; i++) {
+                    strip.appendChild(createSymbol(getRandomSymbol()));
+                }
+                strip.style.transform = `translateY(-${2 * SYMBOL_HEIGHT - OFFSET}px)`;
+            });
+        }
+
+        function createSymbol(sym) {
+            const div = document.createElement('div');
+            div.className = 'symbol';
+            div.innerHTML = sym.svg;
+            return div;
+        }
+
+        function getRandomSymbol() {
+            const total = symbols.reduce((a,c) => a + c.weight, 0);
+            let r = Math.random() * total;
+            for(let s of symbols) {
+                if(r < s.weight) return s;
+                r -= s.weight;
+            }
+            return symbols[symbols.length-1];
+        }
+
+        async function spin() {
+            if(isSpinning) return;
+            isSpinning = true;
+            spinBtn.disabled = true;
+            statusText.textContent = "SPINNING...";
+            startLightPattern('spin');
+
+            const results = [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+
+            const promises = strips.map((strip, i) => {
+                return new Promise(resolve => {
+                    strip.style.transition = 'none';
+                    strip.style.transform = 'translateY(0px)';
+                    
+                    strip.innerHTML = '';
+                    const frag = document.createDocumentFragment();
+                    frag.appendChild(createSymbol(getRandomSymbol()));
+                    
+                    const spinLen = 15 + (i * 8); 
+                    for(let j=0; j<spinLen; j++) frag.appendChild(createSymbol(getRandomSymbol()));
+                    
+                    frag.appendChild(createSymbol(results[i])); 
+                    frag.appendChild(createSymbol(getRandomSymbol())); 
+                    frag.appendChild(createSymbol(getRandomSymbol())); 
+                    
+                    strip.appendChild(frag);
+                    void strip.offsetWidth;
+
+                    const targetIndex = 1 + spinLen;
+                    const y = -(targetIndex * SYMBOL_HEIGHT) + OFFSET;
+                    
+                    const dur = 2.5 + (i * 0.5);
+                    strip.style.transition = `transform ${dur}s cubic-bezier(0.15, 0.9, 0.35, 1)`;
+                    strip.style.transform = `translateY(${y}px)`;
+
+                    setTimeout(resolve, dur * 1000);
+                });
+            });
+
+            await Promise.all(promises);
+            isSpinning = false;
+            spinBtn.disabled = false;
+            checkWin(results);
+        }
+
+        function checkWin(res) {
+            const ids = res.map(r => r.id);
+            let win = null;
+
+            if(ids[0] === ids[1] && ids[1] === ids[2]) win = res[0];
+            else if(ids.filter(x => x === 'lemon').length === 2) win = {prize: 'TEDDY BEAR'};
+
+            if(win) {
+                statusText.innerHTML = win.prize;
+                startLightPattern('win');
+                shootConfetti();
+            } else {
+                statusText.textContent = "TRY AGAIN";
+                startLightPattern('idle');
+            }
+        }
+
+        const canvas = document.getElementById('fx-canvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        
+        window.onresize = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        window.onresize();
+
+        function shootConfetti() {
+            particles = [];
+            for(let i=0; i<150; i++) {
+                particles.push({
+                    x: canvas.width/2, y: canvas.height/2,
+                    vx: (Math.random()-0.5)*25, vy: (Math.random()-1)*25,
+                    c: `hsl(${Math.random()*360},100%,50%)`, l: 100
+                });
+            }
+            loop();
+        }
+
+        function loop() {
+            if(!particles.length) { ctx.clearRect(0,0,canvas.width,canvas.height); return; }
+            ctx.clearRect(0,0,canvas.width,canvas.height);
+            particles.forEach(p => {
+                p.x+=p.vx; p.y+=p.vy; p.vy+=0.5; p.l--;
+                ctx.fillStyle = p.c; ctx.fillRect(p.x, p.y, 6, 6);
+            });
+            particles = particles.filter(p => p.l > 0);
+            requestAnimationFrame(loop);
+        }
+
+        initLights();
+        initReels();
+
+    </script>
+</body>
+</html>
